@@ -4,33 +4,50 @@ import gvsig
 from gvsig.libs.formpanel import FormPanel
 import os
 from javax.swing import DefaultListModel
-from org.gvsig.fmap.dal import DALLocator
+#from org.gvsig.fmap.dal import DALLocator
 from java.lang import Number
 from javax.swing.table import DefaultTableModel
 from java.awt import BorderLayout
 from org.gvsig.app.gui.filter import FilterDialog
 from org.gvsig.fmap.dal.swing import DALSwingLocator
+
 from javax.swing import JPanel
 
     
+from gvsig import getResource
+
+#
+#  org.gvsig.tools.swing.api ListElement para crear objetos lista para gvSIG
+#
+
+from org.gvsig.tools.swing.api import ListElement
+
+from org.gvsig.expressionevaluator import ExpressionEvaluatorLocator
+
+from paths.fixmapcontextinvalidate import fixMapcontextInvalidate
+
 class FilterLayerPanel(FormPanel):
-    def __init__(self):
-        FormPanel.__init__(self, os.path.join(os.path.dirname(__file__), "filterdata.xml"))
+    def __init__(self,view):
+        FormPanel.__init__(self, getResource(__file__, "filterdata.xml"))
         
         #self.setPreferredSize(300,300)
         self.nw = None
-        self.view = gvsig.currentView()
+        self.view = view
         self.layer = self.view.getLayer(self.cmbLayers.getSelectedItem()).getFeatureStore()
         # Fill dialog
         layers = self.view.getLayers()
         self.cmbLayers.removeAllItems()
         for layer in layers:
-           self.cmbLayers.addItem(layer.getName())
+           self.cmbLayers.addItem(ListElement(layer.getName(),layer))
+        
            
         self.valuesList = self.lstValues
         self.nw = None
         if self.layer!=None:
-            store  = self.layer.getFeatureStore()
+            try:
+                store  = self.layer.getFeatureStore()
+            except:
+                return
             if store != None: 
                 self.nw = DALSwingLocator.getSwingManager().createQueryFilterExpresion(store)
                 bl = BorderLayout()
@@ -47,7 +64,10 @@ class FilterLayerPanel(FormPanel):
         self.cmbDuplicates.removeAllItems()
         if self.layer == None:
             return
-        ft = self.layer.getFeatureStore().getDefaultFeatureType()
+        try:
+            ft = self.layer.getFeatureStore().getDefaultFeatureType()
+        except:
+            return
         ds = ft.getAttributeDescriptors()
         self.cmbFields.addItem("")
         self.cmbDuplicates.addItem("")
@@ -58,17 +78,14 @@ class FilterLayerPanel(FormPanel):
     def _getCountValues(self,comboField):
         #self.lstValues.getModel().removeAllElements()
         field = comboField.getSelectedItem()
-        if field == None or field == "":
+        if field in ("",None ):
             return
         if self.layer == None:
             return
         features = self.layer.getFeatureStore().getFeatureSet()
         count = {}
         for f in features:
-            try:
-                ff = f.get(field)
-            except:
-                continue
+            ff = f.get(field)
             if ff in count.keys():
                 count[ff] += 1
             else:
@@ -97,7 +114,8 @@ class FilterLayerPanel(FormPanel):
         self.tblFilter.setModel(tableModel)
 
     def cmbLayers_change(self, *args):
-        self.layer = gvsig.currentView().getLayer(self.cmbLayers.getSelectedItem())
+        #self.layer = self.view.getLayer(self.cmbLayers.getSelectedItem())
+        self.layer = self.cmbLayers.getSelectedItem().getValue()
         self._updateFields()
         self._updateAdvancedFilter()
         #self._updateListValues()
@@ -123,18 +141,31 @@ class FilterLayerPanel(FormPanel):
         if filterType=="basicFilter":
             fq = store.createFeatureQuery()
             fq.retrievesAllAttributes()
-            for field  in store.getDefaultFeatureType().getAttrNames():
+            ft = store.getDefaultFeatureType()
+            for field  in ft.getAttrNames():
                 fq.addAttributeName(field)
             for value in self.valuesList.getSelectedValuesList():
                 field = self.cmbFields.getSelectedItem()
+                
                 if field == "": return
+                #if ft.get(field):
+                #print ft.get(field),getDynFields() 
+                #import pdb
+                #pdb.set_trace()
+                #if store.getDefaultFeatureType().getAttributeDescriptor():
+                #    return
                 if isinstance(value, Number):
                     expression = '%s = %s'%(field, value)
+                    
                 else:
                     expression = "%s = '%s'"%(field, value)
-                expression = DALLocator.getDataManager().createExpresion(expression)
+                print "Numberos: ", expression
+                #expression = DALLocator.getDataManager().createExpresion(expression)
+                expression = ExpressionEvaluatorLocator.getManager().createEvaluator(expression)
+                #import pdb
+                #pdb.set_trace()
                 fq.addFilter(expression)
-            print fq.getFilter()
+            #print fq.getFilter()
             from org.gvsig.tools.evaluator import Evaluator
             if isinstance(fq, Evaluator):
                 self.layer.addBaseFilter(fq)
@@ -142,6 +173,7 @@ class FilterLayerPanel(FormPanel):
                 self.layer.setBaseQuery(fq)
         elif filterType=="advancedFilter":
             expression = self.nw.getExpresion()
+            print "advanced expression:", expression
             fq = store.createFeatureQuery()
             fq.retrievesAllAttributes()
             for field  in store.getDefaultFeatureType().getAttrNames():
@@ -152,18 +184,10 @@ class FilterLayerPanel(FormPanel):
         else:
             return
 
-        #port = gvsig.currentView().getMapContext().getViewPort()
-        #port.refreshExtent()
-        #gvsig.currentView().getMapContext().invalidate()
-        gsv = self.view.getMapContext().getScaleView()
-        self.view.getMapContext().setScaleView(gsv+1)
-        self.view.getMapContext().setScaleView(gsv)
-    
-        
-        #gvsig.currentView().getMapContext().getMapContextDrawer()
-        #gvsig.currentView().getMapContext().getViewPort().refreshExtent()
+        fixMapcontextInvalidate(self.view.getMapContext())
+
         
 def main(*args):
-    l = FilterLayerPanel()
+    l = FilterLayerPanel(gvsig.currentView())
     l.showTool("Filter Layer")
     pass
