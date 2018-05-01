@@ -146,26 +146,15 @@ class FilterLayerPanel(FormPanel):
                 fq.addAttributeName(field)
             for value in self.valuesList.getSelectedValuesList():
                 field = self.cmbFields.getSelectedItem()
-                
                 if field == "": return
-                #if ft.get(field):
-                #print ft.get(field),getDynFields() 
-                #import pdb
-                #pdb.set_trace()
-                #if store.getDefaultFeatureType().getAttributeDescriptor():
-                #    return
-                if isinstance(value, Number):
+                des = store.getDefaultFeatureType().getAttributeDescriptor(field) #.getDataType()
+                if isinstance(des.getObjectClass(), Number):
                     expression = '%s = %s'%(field, value)
-                    
                 else:
                     expression = "%s = '%s'"%(field, value)
-                print "Numberos: ", expression
-                #expression = DALLocator.getDataManager().createExpresion(expression)
                 expression = ExpressionEvaluatorLocator.getManager().createEvaluator(expression)
-                #import pdb
-                #pdb.set_trace()
+
                 fq.addFilter(expression)
-            #print fq.getFilter()
             from org.gvsig.tools.evaluator import Evaluator
             if isinstance(fq, Evaluator):
                 self.layer.addBaseFilter(fq)
@@ -173,7 +162,6 @@ class FilterLayerPanel(FormPanel):
                 self.layer.setBaseQuery(fq)
         elif filterType=="advancedFilter":
             expression = self.nw.getExpresion()
-            print "advanced expression:", expression
             fq = store.createFeatureQuery()
             fq.retrievesAllAttributes()
             for field  in store.getDefaultFeatureType().getAttrNames():
@@ -183,7 +171,7 @@ class FilterLayerPanel(FormPanel):
 
         else:
             return
-
+        #self.view.getWindowOfView()
         fixMapcontextInvalidate(self.view.getMapContext())
 
         
