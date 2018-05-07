@@ -10,12 +10,12 @@ from javax.swing.table import DefaultTableModel
 from java.awt import BorderLayout
 from org.gvsig.app.gui.filter import FilterDialog
 from org.gvsig.fmap.dal.swing import DALSwingLocator
-
+from java.lang import Double
 from javax.swing import JPanel
-
+import sys
     
 from gvsig import getResource
-
+from org.gvsig.tools.evaluator import Evaluator
 #
 #  org.gvsig.tools.swing.api ListElement para crear objetos lista para gvSIG
 #
@@ -26,58 +26,72 @@ from org.gvsig.expressionevaluator import ExpressionEvaluatorLocator
 
 from paths.fixmapcontextinvalidate import fixMapcontextInvalidate
 
+mapContextManager = None
+iconTheme = None
+
+from java.lang import String
+from java.util import Date
+  
 class FilterLayerPanel(FormPanel):
     def __init__(self,view):
         FormPanel.__init__(self, getResource(__file__, "filterdata.xml"))
         
         #self.setPreferredSize(300,300)
-        self.nw = None
+        self.filterExpresionSwing = None
         self.view = view
-        self.layer = self.view.getLayer(self.cmbLayers.getSelectedItem()).getFeatureStore()
+        self.valuesList = self.lstValues
+        self._updateUI()
+        mapContext = self.view.getMapContext()
+        #addUpdateToCListener("FilterDataTool",  mapContext, UpdateListener(self))
+        
+    def _updateUI(self):
         # Fill dialog
         layers = self.view.getLayers()
         self.cmbLayers.removeAllItems()
-        for layer in layers:
-           self.cmbLayers.addItem(ListElement(layer.getName(),layer))
         
-           
-        self.valuesList = self.lstValues
-        self.nw = None
-        if self.layer!=None:
-            try:
-                store  = self.layer.getFeatureStore()
-            except:
-                return
-            if store != None: 
-                self.nw = DALSwingLocator.getSwingManager().createQueryFilterExpresion(store)
-                bl = BorderLayout()
-                self.pnlFilter.setLayout(bl)
-                self.pnlFilter.add(self.nw)
+        for layer in layers:
+           #print getIconFromLayer(layer)
+           self.cmbLayers.addItem(ListElement(layer.getName(),layer))
+
+        # Advanced dialog
+        item = self.cmbLayers.getSelectedItem()
+        
+        #self.valuesList = self.lstValues
+        if item != None and item.getValue()!=None:
+            self.layer = item.getValue()
+            if self.layer!=None:
+                self._updateAdvancedFilter()
+
+        # Duplicates table
+        tableModel = DefaultTableModel(None, ["Field", "Count"])
+        self.tblFilter.setModel(tableModel)
 
     def _updateAdvancedFilter(self):
-        if self.nw == None:
-            return
-        self.nw.setFeatureStore(self.layer.getFeatureStore())
+        if self.filterExpresionSwing == None:
+            store = self.layer.getFeatureStore()
+            self.filterExpresionSwing = DALSwingLocator.getSwingManager().createQueryFilterExpresion(store)
+            bl = BorderLayout()
+            self.pnlFilter.setLayout(bl)
+            self.pnlFilter.add(self.filterExpresionSwing)
+        self.filterExpresionSwing.setFeatureStore(self.layer.getFeatureStore())
         
     def _updateFields(self):
         self.cmbFields.removeAllItems()
         self.cmbDuplicates.removeAllItems()
         if self.layer == None:
             return
-        try:
-            ft = self.layer.getFeatureStore().getDefaultFeatureType()
-        except:
-            return
+       
+        ft = self.layer.getFeatureStore().getDefaultFeatureType()
         ds = ft.getAttributeDescriptors()
-        self.cmbFields.addItem("")
-        self.cmbDuplicates.addItem("")
+        self.cmbFields.addItem(ListElement("",""))
+        self.cmbDuplicates.addItem(ListElement("",""))
         for d in ds:
-            self.cmbFields.addItem(str(d.getName())) 
-            self.cmbDuplicates.addItem(str(d.getName()))
+            self.cmbFields.addItem(ListElement(str(d.getName()),str(d.getName()))) 
+            self.cmbDuplicates.addItem(ListElement(str(d.getName()),str(d.getName()))) 
 
     def _getCountValues(self,comboField):
         #self.lstValues.getModel().removeAllElements()
-        field = comboField.getSelectedItem()
+        field = comboField.getSelectedItem().getValue()
         if field in ("",None ):
             return
         if self.layer == None:
@@ -97,6 +111,7 @@ class FilterLayerPanel(FormPanel):
         count = self._getCountValues(self.cmbFields)
         if count == None: return
         model = DefaultListModel()
+        
         for i in sorted(count.keys()):
             model.addElement(i)
         self.valuesList.setModel(model)
@@ -110,7 +125,7 @@ class FilterLayerPanel(FormPanel):
         for i,j in count.iteritems():
             dict_list.append ((i,j))
         sorted_list = sorted(dict_list,key=lambda x: x[1],reverse=True)
-        tableModel = DefaultTableModel(sorted_list, ["Field", "Duplicates"])
+        tableModel = DefaultTableModel(sorted_list, ["Field", "Count"])
         self.tblFilter.setModel(tableModel)
 
     def cmbLayers_change(self, *args):
@@ -119,10 +134,12 @@ class FilterLayerPanel(FormPanel):
         self._updateFields()
         self._updateAdvancedFilter()
         #self._updateListValues()
-        
+    def btnCleanFilter_click(self, *args):
+        bq = self.layer.getBaseQuery()
+        self.layer.setBaseQuery(bq)
     def cmbFields_change(self, *args):
         self._updateListValues()
-        
+
     def lstValues_change(self, *args):
         self.process("basicFilter")
         
@@ -135,8 +152,7 @@ class FilterLayerPanel(FormPanel):
     def process(self, filterType):#btnProcess_click(self, *args):
         store = self.layer.getFeatureStore()
 
-        # TODO: si el campo esta vacio devolver el query sin filtro
-        #filter = DALLocator.getDataManager().createExpresion()
+        # TODO: if field is empty, return all features filter
 
         if filterType=="basicFilter":
             fq = store.createFeatureQuery()
@@ -147,21 +163,33 @@ class FilterLayerPanel(FormPanel):
             for value in self.valuesList.getSelectedValuesList():
                 field = self.cmbFields.getSelectedItem()
                 if field == "": return
-                des = store.getDefaultFeatureType().getAttributeDescriptor(field) #.getDataType()
-                if isinstance(des.getObjectClass(), Number):
-                    expression = '%s = %s'%(field, value)
-                else:
+                des = store.getDefaultFeatureType().getAttributeDescriptor(field)
+                
+                expression = "%s = '%s'"%(field, value)
+                goc = des.getObjectClass()
+                #import pdb
+                #pdb.set_trace()
+                
+                if goc is String:
                     expression = "%s = '%s'"%(field, value)
+                elif goc is Double:
+                    expression = "%s = %s"%(field, str(value))
+                elif goc is Number:
+                    expression = '%s = %s'%(field, str(value))
+                elif goc is Date:
+                    expression = "%s = DATE('%s')"%(field, str(value))
+                else:
+                    expression = "%s = %s"%(field, str(value))
+
                 expression = ExpressionEvaluatorLocator.getManager().createEvaluator(expression)
 
                 fq.addFilter(expression)
-            from org.gvsig.tools.evaluator import Evaluator
             if isinstance(fq, Evaluator):
                 self.layer.addBaseFilter(fq)
             else:
                 self.layer.setBaseQuery(fq)
         elif filterType=="advancedFilter":
-            expression = self.nw.getExpresion()
+            expression = self.filterExpresionSwing.getExpresion()
             fq = store.createFeatureQuery()
             fq.retrievesAllAttributes()
             for field  in store.getDefaultFeatureType().getAttrNames():

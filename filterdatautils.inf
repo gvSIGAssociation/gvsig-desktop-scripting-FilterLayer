@@ -3,7 +3,7 @@ enable = true
 
 [Unit]
 type = Script
-name = filterdata
+name = filterdatautils
 description = 
 createdBy = 
 version = 
