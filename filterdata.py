@@ -23,21 +23,24 @@ from org.gvsig.tools.evaluator import Evaluator
 from org.gvsig.tools.swing.api import ListElement
 
 from org.gvsig.expressionevaluator import ExpressionEvaluatorLocator
-
+from org.gvsig.fmap.dal import DALLocator
 from paths.fixmapcontextinvalidate import fixMapcontextInvalidate
-
+from org.gvsig.expressionevaluator.swing import ExpressionEvaluatorSwingLocator
 mapContextManager = None
 iconTheme = None
-
+from org.gvsig.fmap.dal.swing import DataSwingManager
 from java.lang import String
 from java.util import Date
-  
+from gvsig import logger
+from gvsig import LOGGER_WARN,LOGGER_INFO,LOGGER_ERROR
+
 class FilterLayerPanel(FormPanel):
     def __init__(self,view):
         FormPanel.__init__(self, getResource(__file__, "filterdata.xml"))
         
         #self.setPreferredSize(300,300)
         self.filterExpresionSwing = None
+        self.layer = None
         self.view = view
         self.valuesList = self.lstValues
         self._updateUI()
@@ -67,13 +70,46 @@ class FilterLayerPanel(FormPanel):
         self.tblFilter.setModel(tableModel)
 
     def _updateAdvancedFilter(self):
-        if self.filterExpresionSwing == None:
-            store = self.layer.getFeatureStore()
-            self.filterExpresionSwing = DALSwingLocator.getSwingManager().createQueryFilterExpresion(store)
-            bl = BorderLayout()
-            self.pnlFilter.setLayout(bl)
-            self.pnlFilter.add(self.filterExpresionSwing)
-        self.filterExpresionSwing.setFeatureStore(self.layer.getFeatureStore())
+      #if self.filterExpresionSwing == None:
+      if self.layer==None:
+        return
+      
+      store = self.layer.getFeatureStore()
+      #self.filterExpresionSwing = DALSwingLocator.getSwingManager().createQueryFilterExpresion(store)
+      # Expression
+      ## Sample feature
+      sampleFeature = None
+      try:
+        sampleFeature = store.getFeatureSelection().first()
+        if sampleFeature == None:
+          sampleFeature = store.first()
+      except:
+        logger("Not able to create Sample Feature for FieldCalculatorTool", LOGGER_WARN)
+      self.pnlFilter.removeAll()
+      self.expBuilder = ExpressionEvaluatorSwingLocator.getManager().createJExpressionBuilder()
+      if sampleFeature!=None:
+        dataManager = DALLocator.getDataManager()
+        featureSymbolTable = dataManager.createFeatureSymbolTable()
+        featureSymbolTable.setFeature(sampleFeature);
+        self.expBuilder.setPreviewSymbolTable(featureSymbolTable.createParent())
+        
+      #self.expBuilder.addSymbolTable(DataManager.FEATURE_SYMBOL_TABLE)
+      swingManager = ExpressionEvaluatorSwingLocator.getManager()
+      element = swingManager.createElement(
+                  DataSwingManager.FEATURE_STORE_EXPRESSION_ELEMENT,
+                  self.expBuilder,
+                  store)
+      self.expBuilder.addElement(element)
+      
+      self.pnlFilter.setLayout(BorderLayout())
+      self.pnlFilter.add(self.expBuilder.asJComponent())
+      self.pnlFilter.updateUI()
+      self.pnlFilter.revalidate()
+      self.pnlFilter.repaint()
+
+
+          
+      #self.filterExpresionSwing.setFeatureStore(self.layer.getFeatureStore())
         
     def _updateFields(self):
         self.cmbFields.removeAllItems()
@@ -83,14 +119,22 @@ class FilterLayerPanel(FormPanel):
        
         ft = self.layer.getFeatureStore().getDefaultFeatureType()
         ds = ft.getAttributeDescriptors()
-        self.cmbFields.addItem(ListElement("",""))
-        self.cmbDuplicates.addItem(ListElement("",""))
+        self.cmbFields.addItem(ListElement("",None))
+        self.cmbDuplicates.addItem(ListElement("",None))
+        worked = False
         for d in ds:
-            self.cmbFields.addItem(ListElement(str(d.getName()),str(d.getName()))) 
-            self.cmbDuplicates.addItem(ListElement(str(d.getName()),str(d.getName()))) 
+            self.cmbFields.addItem(ListElement(str(d.getName()),d)) 
+            self.cmbDuplicates.addItem(ListElement(str(d.getName()),d))
+            worked = True
+        if worked:
+          self.cmbFields.setSelectedIndex(0) #TODO
 
     def _getCountValues(self,comboField):
         #self.lstValues.getModel().removeAllElements()
+        
+        selectedItem = comboField.getSelectedItem()
+        if selectedItem == None:
+            return
         field = comboField.getSelectedItem().getValue()
         if field in ("",None ):
             return
@@ -99,7 +143,7 @@ class FilterLayerPanel(FormPanel):
         features = self.layer.getFeatureStore().getFeatureSet()
         count = {}
         for f in features:
-            ff = f.get(field)
+            ff = f.get(field.getName())
             if ff in count.keys():
                 count[ff] += 1
             else:
@@ -134,9 +178,17 @@ class FilterLayerPanel(FormPanel):
         self._updateFields()
         self._updateAdvancedFilter()
         #self._updateListValues()
+        self.valuesList.getModel().removeAllElements()
+        tableModel = DefaultTableModel([["",""]], ["Field", "Count"])
+        self.tblFilter.setModel(tableModel)
+        self.tblFilter.revalidate()
+        self.tblFilter.repaint()
+        
+        
     def btnCleanFilter_click(self, *args):
         bq = self.layer.getBaseQuery()
         self.layer.setBaseQuery(bq)
+        
     def cmbFields_change(self, *args):
         self._updateListValues()
 
@@ -155,45 +207,59 @@ class FilterLayerPanel(FormPanel):
         # TODO: if field is empty, return all features filter
 
         if filterType=="basicFilter":
+            ft = store.getDefaultFeatureType()
+            builder = store.createExpressionBuilder()
+            field = self.cmbFields.getSelectedItem().getValue()
+            if field==None:
+              return
+            nameField = field.getName()
+            if nameField=="":
+              return
+            if len(self.valuesList.getSelectedValuesList()) == 0:
+              return
+            if len(self.valuesList.getSelectedValuesList()) == 1:
+              value = self.valuesList.getSelectedValuesList()[0]
+
+              ## Eq expression
+              expFilter = builder.eq(
+                    builder.column(nameField),
+                    builder.constant(value)
+                    ).toString()
+            else:
+              expFilter = ""
+              for value in self.valuesList.getSelectedValuesList():
+                partialExpFilter = builder.eq(
+                    builder.column(nameField),
+                    builder.constant(value)
+                    ).toString()
+                if expFilter=="": 
+                  expFilter += partialExpFilter
+                else:
+                  expFilter = builder.or( builder.custom(expFilter), builder.custom(partialExpFilter)).toString()
+              #expFilter = expFilter.toString()
+            logger("Filter applied: " + expFilter, LOGGER_INFO)
+            exp = ExpressionEvaluatorLocator.getManager().createExpression()
+            exp.setPhrase(expFilter)
+            evaluator = DALLocator.getDataManager().createExpresion(exp)
             fq = store.createFeatureQuery()
             fq.retrievesAllAttributes()
-            ft = store.getDefaultFeatureType()
-            for field  in ft.getAttrNames():
-                fq.addAttributeName(field)
-            for value in self.valuesList.getSelectedValuesList():
-                field = self.cmbFields.getSelectedItem()
-                if field == "": return
-                des = store.getDefaultFeatureType().getAttributeDescriptor(field)
-                
-                expression = "%s = '%s'"%(field, value)
-                goc = des.getObjectClass()
-                #import pdb
-                #pdb.set_trace()
-                
-                if goc is String:
-                    expression = "%s = '%s'"%(field, value)
-                elif goc is Double:
-                    expression = "%s = %s"%(field, str(value))
-                elif goc is Number:
-                    expression = '%s = %s'%(field, str(value))
-                elif goc is Date:
-                    expression = "%s = DATE('%s')"%(field, str(value))
-                else:
-                    expression = "%s = %s"%(field, str(value))
-
-                expression = ExpressionEvaluatorLocator.getManager().createEvaluator(expression)
-
-                fq.addFilter(expression)
+            fq.setFilter(evaluator)
+            fq.retrievesAllAttributes()
+            
+            # UPDATE VALUES
+            #fset = store.getFeatureSet(fq)
+            fq.addFilter(exp)
+            
             if isinstance(fq, Evaluator):
                 self.layer.addBaseFilter(fq)
             else:
                 self.layer.setBaseQuery(fq)
         elif filterType=="advancedFilter":
-            expression = self.filterExpresionSwing.getExpresion()
+            expression = self.expBuilder.getExpression()
             fq = store.createFeatureQuery()
             fq.retrievesAllAttributes()
-            for field  in store.getDefaultFeatureType().getAttrNames():
-                fq.addAttributeName(field)
+            #for field  in store.getDefaultFeatureType().getAttrNames():
+            #    fq.addAttributeName(field)
             fq.setFilter(expression)
             self.layer.setBaseQuery(fq)
 
