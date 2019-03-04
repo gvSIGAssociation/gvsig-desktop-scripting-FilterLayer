@@ -24,10 +24,10 @@
     </at>
     <at name="componentclass">com.jeta.forms.gui.form.FormComponent</at>
    </super>
-   <at name="id">D:\gvsig-desktop\gvSIG-desktop-2.4.0-2850-final-win-x86_64\preferences\gvSIG\plugins\org.gvsig.scripting.app.mainplugin\2.4.0\scripts\addons\FilterLayer\filterdata.xml</at>
-   <at name="path">addons\FilterLayer\filterdata.xml</at>
+   <at name="id">/home/osc/gvSIG/plugins/org.gvsig.scripting.app.mainplugin/2.5.0/scripts/addons/FilterLayer/filterdata.xml</at>
+   <at name="path">addons/FilterLayer/filterdata.xml</at>
    <at name="rowspecs">CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,FILL:460PX:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE</at>
-   <at name="colspecs">FILL:DEFAULT:NONE,FILL:78PX:GROW(1.0),FILL:570PX:NONE,FILL:18PX:NONE</at>
+   <at name="colspecs">FILL:DEFAULT:NONE,FILL:78PX:GROW(1.0),FILL:DEFAULT:GROW(1.0),FILL:18PX:NONE</at>
    <at name="components">
     <object classname="java.util.LinkedList">
      <item >
@@ -109,9 +109,9 @@
                       </at>
                       <at name="componentclass">com.jeta.forms.gui.form.FormComponent</at>
                      </super>
-                     <at name="id">embedded.1857713827</at>
-                     <at name="rowspecs">CENTER:DEFAULT:NONE,CENTER:29PX:NONE,CENTER:DEFAULT:NONE,FILL:DEFAULT:GROW(1.0),CENTER:DEFAULT:NONE</at>
-                     <at name="colspecs">FILL:90PX:GROW(1.0),FILL:21PX:NONE</at>
+                     <at name="id">embedded.376815204</at>
+                     <at name="rowspecs">CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,FILL:DEFAULT:GROW(1.0),CENTER:DEFAULT:NONE</at>
+                     <at name="colspecs">FILL:DEFAULT:GROW(1.0),FILL:21PX:NONE</at>
                      <at name="components">
                       <object classname="java.util.LinkedList">
                        <item >
@@ -161,7 +161,7 @@
                               <at name="scrollableTracksViewportHeight">true</at>
                               <at name="scrollableTracksViewportWidth">true</at>
                               <at name="name">lstValues</at>
-                              <at name="width">868</at>
+                              <at name="width">682</at>
                               <at name="items">
                                <object classname="com.jeta.forms.store.properties.ItemsProperty">
                                 <at name="name">items</at>
@@ -194,7 +194,7 @@
                                 </at>
                                </object>
                               </at>
-                              <at name="height">301</at>
+                              <at name="height">306</at>
                              </object>
                             </at>
                            </object>
@@ -247,7 +247,7 @@
                                </object>
                               </at>
                               <at name="name">cmbFields</at>
-                              <at name="width">870</at>
+                              <at name="width">684</at>
                               <at name="items">
                                <object classname="com.jeta.forms.store.properties.ItemsProperty">
                                 <at name="name">items</at>
@@ -385,9 +385,9 @@
                       </at>
                       <at name="componentclass">com.jeta.forms.gui.form.FormComponent</at>
                      </super>
-                     <at name="id">embedded.1714183919</at>
-                     <at name="rowspecs">CENTER:DEFAULT:NONE,FILL:98PX:GROW(1.0),CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE</at>
-                     <at name="colspecs">FILL:DEFAULT:NONE,FILL:413PX:GROW(1.0),FILL:17PX:NONE</at>
+                     <at name="id">embedded.2069901159</at>
+                     <at name="rowspecs">CENTER:DEFAULT:NONE,FILL:DEFAULT:GROW(1.0),CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE</at>
+                     <at name="colspecs">FILL:DEFAULT:NONE,FILL:DEFAULT:GROW(1.0),FILL:17PX:NONE</at>
                      <at name="components">
                       <object classname="java.util.LinkedList">
                        <item >
@@ -415,7 +415,7 @@
                             <at name="properties">
                              <object classname="com.jeta.forms.store.support.PropertyMap">
                               <at name="name">pnlFilter</at>
-                              <at name="width">858</at>
+                              <at name="width">672</at>
                               <at name="height">279</at>
                              </object>
                             </at>
@@ -441,7 +441,7 @@
                            </at>
                            <at name="componentclass">com.jeta.forms.gui.form.FormComponent</at>
                           </super>
-                          <at name="id">embedded.1041736687</at>
+                          <at name="id">embedded.575078155</at>
                           <at name="rowspecs">CENTER:DEFAULT:NONE</at>
                           <at name="colspecs">FILL:DEFAULT:NONE,FILL:DEFAULT:NONE,FILL:DEFAULT:NONE</at>
                           <at name="components">
@@ -492,7 +492,7 @@
                                    </at>
                                    <at name="actionCommand">Procesar</at>
                                    <at name="name">btnAdvancedFilter</at>
-                                   <at name="width">56</at>
+                                   <at name="width">60</at>
                                    <at name="text">Filter</at>
                                    <at name="height">22</at>
                                   </object>
@@ -708,9 +708,9 @@
                       </at>
                       <at name="componentclass">com.jeta.forms.gui.form.FormComponent</at>
                      </super>
-                     <at name="id">embedded.363888918</at>
+                     <at name="id">embedded.2005979710</at>
                      <at name="rowspecs">CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,CENTER:DEFAULT:NONE,FILL:DEFAULT:GROW(1.0),CENTER:DEFAULT:NONE</at>
-                     <at name="colspecs">FILL:DEFAULT:NONE,FILL:272PX:GROW(1.0),FILL:DEFAULT:NONE</at>
+                     <at name="colspecs">FILL:DEFAULT:NONE,FILL:DEFAULT:GROW(1.0),FILL:DEFAULT:NONE</at>
                      <at name="components">
                       <object classname="java.util.LinkedList">
                        <item >
@@ -758,7 +758,7 @@
                                </object>
                               </at>
                               <at name="name">tblFilter</at>
-                              <at name="width">857</at>
+                              <at name="width">671</at>
                               <at name="scollBars">
                                <object classname="com.jeta.forms.store.properties.ScrollBarsProperty">
                                 <at name="name">scollBars</at>
@@ -840,7 +840,7 @@
                                </object>
                               </at>
                               <at name="name">cmbDuplicates</at>
-                              <at name="width">859</at>
+                              <at name="width">673</at>
                               <at name="items">
                                <object classname="com.jeta.forms.store.properties.ItemsProperty">
                                 <at name="name">items</at>
@@ -954,7 +954,7 @@
               </at>
              </object>
             </at>
-            <at name="width">922</at>
+            <at name="width">736</at>
             <at name="tabCount">3</at>
             <at name="height">456</at>
            </object>
@@ -1008,7 +1008,7 @@
               </at>
              </object>
             </at>
-            <at name="width">352</at>
+            <at name="width">390</at>
             <at name="name"/>
             <at name="text">Layers</at>
             <at name="fill">
@@ -1068,7 +1068,7 @@
               </at>
              </object>
             </at>
-            <at name="width">352</at>
+            <at name="width">390</at>
             <at name="name"/>
             <at name="text">Values</at>
             <at name="fill">
@@ -1129,7 +1129,7 @@
              </object>
             </at>
             <at name="name">cmbLayers</at>
-            <at name="width">566</at>
+            <at name="width">342</at>
             <at name="items">
              <object classname="com.jeta.forms.store.properties.ItemsProperty">
               <at name="name">items</at>
@@ -1160,7 +1160,7 @@
          </at>
          <at name="componentclass">com.jeta.forms.gui.form.FormComponent</at>
         </super>
-        <at name="id">embedded.302889167</at>
+        <at name="id">embedded.1008295060</at>
         <at name="rowspecs">CENTER:DEFAULT:NONE</at>
         <at name="colspecs">FILL:DEFAULT:NONE,FILL:DEFAULT:NONE,FILL:DEFAULT:NONE</at>
         <at name="components">
@@ -1211,7 +1211,7 @@
                  </at>
                  <at name="actionCommand">Cerrar</at>
                  <at name="name">btnClose</at>
-                 <at name="width">58</at>
+                 <at name="width">64</at>
                  <at name="text">Close</at>
                  <at name="height">22</at>
                 </object>
@@ -1267,7 +1267,7 @@
                  </at>
                  <at name="actionCommand">Clean filter</at>
                  <at name="name">btnCleanFilter</at>
-                 <at name="width">84</at>
+                 <at name="width">94</at>
                  <at name="text">Clean filter</at>
                  <at name="height">22</at>
                 </object>

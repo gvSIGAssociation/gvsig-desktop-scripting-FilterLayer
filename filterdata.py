@@ -106,8 +106,6 @@ class FilterLayerPanel(FormPanel):
       self.pnlFilter.updateUI()
       self.pnlFilter.revalidate()
       self.pnlFilter.repaint()
-
-
           
       #self.filterExpresionSwing.setFeatureStore(self.layer.getFeatureStore())
         
